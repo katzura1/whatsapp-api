@@ -142,7 +142,7 @@ app.use('/message', (req, res, next) => {
 },message_route, message_group_route);
 
 // Port
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`Server Jalan di http://localhost:${PORT}`)
 })
