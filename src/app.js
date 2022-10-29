@@ -5,9 +5,10 @@ const fs = require('fs')
 const qrcode = require('qrcode');
 const http = require('http');
 const { Server }  = require('socket.io');
-
+const axios = require('axios');
 // WA Web
 const { Client, LocalAuth } = require('whatsapp-web.js');
+const url_api = "http://127.0.0.1:8000/api/";
 
 // Env
 require('dotenv').config();
@@ -108,10 +109,72 @@ client.on('ready', () => {
 });
 
 // On Message
-client.on('message', message => {
-	if(message.body === '!test') {
-		message.reply('This is just a test');
-	}
+client.on('message', async message =>  {
+    console.log(message);
+	if (message.body.startsWith('!balanceUp')) {
+        let chat = await message.getChat();
+        const name_group = chat.name;
+        const name_user = message.body.split('-')[1]??"-";
+        const data = {
+            name_group,
+            name_user,
+            action : 'up',
+        };
+
+        axios
+        .post(url_api+'group/update-balance', data)
+        .then(res => {
+            // console.log(`Status: ${res.status}`)
+            // console.log('Body: ', res.data)
+            if(res.data.code == 200){
+                message.reply('Update Balance for '+name_user);
+            }
+        })
+        .catch(err => {
+            console.error(err)
+        })
+    }else if (message.body.startsWith('!balanceDown')) {
+        let chat = await message.getChat();
+        const name_group = chat.name;
+        const name_user = message.body.split('-')[1]??"-";
+        const data = {
+            name_group,
+            name_user,
+            action : 'down',
+        };
+
+        axios
+        .post(url_api+'group/update-balance', data)
+        .then(res => {
+            // console.log(`Status: ${res.status}`)
+            // console.log('Body: ', res.data)
+            if(res.data.code == 200){
+                message.reply('Update Balance for '+name_user);
+            }
+        })
+        .catch(err => {
+            console.error(err)
+        })
+    }else if (message.body.startsWith('!info')) {
+        let chat = await message.getChat();
+        const name_group = chat.name;
+        const data = {
+            name_group,
+        };
+
+        axios
+        .post(url_api+'group/info-balance', data)
+        .then(res => {
+            // console.log(`Status: ${res.status}`)
+            // console.log('Body: ', res.data)
+            if(res.data.code == 200){
+                message.reply(res.data.message);
+            }
+        })
+        .catch(err => {
+            console.error(err)
+        })
+    }
 });
  
 // Socket .io

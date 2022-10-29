@@ -5,6 +5,17 @@ const ResponseBulider = require('../helpers/responseBuilder');
 const { MessageMedia } = require('whatsapp-web.js');
 class MessageGroupController{
 
+    // Get Group Chat
+    getGroupChat = async (req, res) => {
+        try{
+            const { group_name, message} = req.body;
+            const client = req.data_client;
+        }catch(error){
+            // If Error
+            return ResponseBulider.error(res, 500, error.message); 
+        }
+    }
+
     // Sending Group Chat
     groupChat = async (req, res) => {
         try {
@@ -16,6 +27,7 @@ class MessageGroupController{
                 const grup = chats.find((chat) => chat.name === group_name);
 
                 // Sending Message
+                console.log(message);
                 const pesan = await grup.sendMessage(message)
                 return ResponseBulider.success(res, pesan);
 

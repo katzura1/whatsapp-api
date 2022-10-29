@@ -2,6 +2,7 @@
 const ResponseBulider = require('../helpers/responseBuilder');
 
 const auth = (req, res, next) => {
+    console.log(req.headers);
     const authHeader = req.headers.authorization;
     const status = req.status;
 
