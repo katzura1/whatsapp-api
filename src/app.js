@@ -43,7 +43,7 @@ app.get('/', (req, res) => {
 // Use the saved values
 const client = new Client({
     puppeteer: { 
-        headless: true,
+        headless: false,
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
@@ -62,6 +62,7 @@ client.initialize();
 
 client.on('loading_screen', (percent, message) => {
     console.log('LOADING SCREEN', percent, message);
+    io.emit('messages',  'LOADING SCREEN '+percent+' '+message);
 });
 
 // Ketika Auth Berhasil
@@ -102,78 +103,88 @@ client.on('disconnected', () => {
 client.on('auth_failure', msg => {
     // Fired if session restore was unsuccessful
     console.error('AUTHENTICATION FAILURE', msg);
+    io.emit('messages', 'AUTHENTICATION FAILURE' + msg);
 });
 
 client.on('ready', () => {
     console.log('READY');
+    io.emit('messages', 'READY');
+    setInterval(() => {
+        client.pupPage.click("#pane-side");
+    }, 5000);
 });
 
 // On Message
 client.on('message', async message =>  {
-    console.log(message);
 	if (message.body.startsWith('!balanceUp')) {
         let chat = await message.getChat();
-        const name_group = chat.name;
-        const name_user = message.body.split('-')[1]??"-";
-        const data = {
-            name_group,
-            name_user,
-            action : 'up',
-        };
+        if(chat.isGroup){
+            const name_group = chat.name;
+            const name_user = message.body.split('-')[1]??"-";
+            const data = {
+                name_group,
+                name_user,
+                action : 'up',
+            };
 
-        axios
-        .post(url_api+'group/update-balance', data)
-        .then(res => {
-            // console.log(`Status: ${res.status}`)
-            // console.log('Body: ', res.data)
-            if(res.data.code == 200){
-                message.reply('Update Balance for '+name_user);
-            }
-        })
-        .catch(err => {
-            console.error(err)
-        })
+            axios
+            .post(url_api+'group/update-balance', data)
+            .then(res => {
+                // console.log(`Status: ${res.status}`)
+                // console.log('Body: ', res.data)
+                if(res.data.code == 200){
+                    message.reply('Update Balance for '+name_user);
+                }
+            })
+            .catch(err => {
+                console.error(err)
+            })
+         }
     }else if (message.body.startsWith('!balanceDown')) {
         let chat = await message.getChat();
-        const name_group = chat.name;
-        const name_user = message.body.split('-')[1]??"-";
-        const data = {
-            name_group,
-            name_user,
-            action : 'down',
-        };
+        if(chat.isGroup){
+            const name_group = chat.name;
+            const name_user = message.body.split('-')[1]??"-";
+            const data = {
+                name_group,
+                name_user,
+                action : 'down',
+            };
 
-        axios
-        .post(url_api+'group/update-balance', data)
-        .then(res => {
-            // console.log(`Status: ${res.status}`)
-            // console.log('Body: ', res.data)
-            if(res.data.code == 200){
-                message.reply('Update Balance for '+name_user);
-            }
-        })
-        .catch(err => {
-            console.error(err)
-        })
+            axios
+            .post(url_api+'group/update-balance', data)
+            .then(res => {
+                // console.log(`Status: ${res.status}`)
+                // console.log('Body: ', res.data)
+                if(res.data.code == 200){
+                    message.reply('Update Balance for '+name_user);
+                }
+            })
+            .catch(err => {
+                console.error(err)
+            })
+        }
     }else if (message.body.startsWith('!info')) {
         let chat = await message.getChat();
-        const name_group = chat.name;
-        const data = {
-            name_group,
-        };
-
-        axios
-        .post(url_api+'group/info-balance', data)
-        .then(res => {
-            // console.log(`Status: ${res.status}`)
-            // console.log('Body: ', res.data)
-            if(res.data.code == 200){
-                message.reply(res.data.message);
-            }
-        })
-        .catch(err => {
-            console.error(err)
-        })
+        if(chat.isGroup){
+            const name_group = chat.name;
+            const data = {
+                name_group,
+            };
+    
+            axios
+            .post(url_api+'group/info-balance', data)
+            .then(res => {
+                // console.log(`Status: ${res.status}`)
+                // console.log('Body: ', res.data)
+                if(res.data.code == 200){
+                    message.reply(res.data.message);
+                }
+            })
+            .catch(err => {
+                console.error(err)
+            })
+        }
     }
 });
  
@@ -192,6 +203,10 @@ client.on('qr', (qr) => {
     });
 });
 
+client.on('change_state', state => {
+    console.log('CHANGE STATE', state );
+    io.emit('message','CHANGE STATE'+state );
+});
 // Seperate Route
 const message_route = require('./api/routes/message-route');
 const message_group_route = require('./api/routes/message-group-route');
